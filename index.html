@@ -1,0 +1,728 @@
+<!DOCTYPE html><html><head><style></style></head><body><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📤 One-Time Image Share</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #604CC3;
+            --accent: #FF6600;
+            --success: #8FD14F;
+            --bg-light: #F5F5F5;
+            --bg-dark: #2a2a2a;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --border-color: #ddd;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-light) 0%, #e8e8e8 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            animation: fadeIn 0.6s ease-in;
+        }
+
+        .section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .section:hover {
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .section-title {
+            color: var(--primary);
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        /* Upload Section */
+        .upload-area {
+            border: 3px dashed var(--primary);
+            border-radius: 15px;
+            padding: 60px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: linear-gradient(45deg, var(--bg-light), #fff);
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent);
+            background: linear-gradient(45deg, rgba(255, 102, 0, 0.05), #fff);
+            transform: scale(1.02);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--success);
+            background: linear-gradient(45deg, rgba(143, 209, 79, 0.1), #fff);
+            transform: scale(1.03);
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+            animation: bounce 2s infinite;
+        }
+
+        .upload-text {
+            color: var(--primary);
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: var(--text-secondary);
+            font-size: 0.95em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* Gallery Grid */
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .image-card {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+            background: white;
+            border: 2px solid transparent;
+            animation: slideIn 0.4s ease-out backwards;
+        }
+
+        .image-card:nth-child(1) { animation-delay: 0.05s; }
+        .image-card:nth-child(2) { animation-delay: 0.1s; }
+        .image-card:nth-child(3) { animation-delay: 0.15s; }
+        .image-card:nth-child(4) { animation-delay: 0.2s; }
+        .image-card:nth-child(5) { animation-delay: 0.25s; }
+        .image-card:nth-child(6) { animation-delay: 0.3s; }
+
+        .image-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            border-color: var(--success);
+        }
+
+        .image-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .image-info {
+            padding: 15px;
+            background: var(--bg-light);
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .image-name {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: var(--text-primary);
+            word-break: break-word;
+            margin-bottom: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .image-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 600;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .btn-share {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-share:hover {
+            background: #7bc45c;
+            transform: scale(1.05);
+        }
+
+        .btn-delete {
+            background: #ff4444;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #cc0000;
+            transform: scale(1.05);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4a3a9f;
+            transform: scale(1.05);
+        }
+
+        .btn-copy {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-copy:hover {
+            background: #7bc45c;
+            transform: scale(1.05);
+        }
+
+        /* WhatsApp Preview */
+        .whatsapp-preview {
+            background: linear-gradient(180deg, #e5ddd5 0%, #d4c5b5 100%);
+            border-radius: 15px;
+            padding: 20px;
+            max-width: 450px;
+            margin: 0 auto;
+            border: 1px solid #c5b5a5;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .whatsapp-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+
+        .whatsapp-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--success);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .whatsapp-info h4 {
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .whatsapp-info p {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .chat-bubble {
+            background: var(--success);
+            color: white;
+            padding: 12px 15px;
+            border-radius: 15px 15px 0 15px;
+            max-width: 95%;
+            margin-bottom: 10px;
+            position: relative;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .chat-bubble img {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .chat-bubble-text {
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
+
+        .empty-preview {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-preview-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        /* Link Sharing */
+        .link-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .link-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .link-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .link-display {
+            background: var(--bg-light);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid var(--success);
+            color: var(--primary);
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            margin-top: 15px;
+        }
+
+        .link-info {
+            background: rgba(255, 102, 0, 0.1);
+            border-left: 4px solid var(--accent);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--primary);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+            font-weight: 600;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: var(--success);
+        }
+
+        .toast.error {
+            background: #ff4444;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            .upload-area {
+                padding: 40px 20px;
+            }
+
+            .image-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 15px;
+            }
+
+            .link-input-group {
+                flex-direction: column;
+            }
+
+            .toast {
+                bottom: 20px;
+                right: 20px;
+                left: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📤 One-Time Image Share</h1>
+
+        <!-- Upload Section -->
+        <div class="section">
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Add Images</div>
+                <div class="upload-subtext">Click or drag & drop to upload</div>
+            </div>
+            <input type="file" id="fileInput" accept="image/*" multiple onchange="handleFiles(this.files)">
+        </div>
+
+        <!-- Gallery Section -->
+        <div class="section">
+            <div class="section-title">
+                <span>🖼️</span> Your Images
+            </div>
+            <div id="imageGallery" class="image-grid">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <p>No images yet. Upload some to get started!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- WhatsApp Preview Section -->
+        <div class="section">
+            <div class="section-title">
+                <span>📱</span> WhatsApp Preview
+            </div>
+            <div class="whatsapp-preview">
+                <div class="whatsapp-header">
+                    <div class="whatsapp-avatar">📸</div>
+                    <div class="whatsapp-info">
+                        <h4>One-Time Share</h4>
+                        <p>View once only</p>
+                    </div>
+                </div>
+                <div id="chatContainer">
+                    <div class="empty-preview">
+                        <div class="empty-preview-icon">👆</div>
+                        <p>Select an image to preview</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Link Sharing Section -->
+        <div class="section">
+            <div class="section-title">
+                <span>🔗</span> Create Share Link
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.95em;">
+                Create a link to share all your images. Recipients can view each image only once, then it disappears.
+            </p>
+            <button class="btn btn-primary" onclick="generateShareLink()" style="width: 100%; padding: 12px;">
+                <span>🔗</span> Generate Share Link
+            </button>
+            <div id="linkDisplay" class="hidden">
+                <div class="link-input-group">
+                    <input type="text" class="link-input" id="linkInput" readonly>
+                    <button class="btn btn-copy" onclick="copyLink()">
+                        <span>📋</span> Copy
+                    </button>
+                </div>
+                <div class="link-info">
+                    <strong>ℹ️ How it works:</strong><br>
+                    • Share this link with anyone<br>
+                    • Each recipient can view images once<br>
+                    • After viewing, images disappear from their view<br>
+                    • Each link supports multiple views (based on image count)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let uploadedImages = [];
+        let selectedImageIndex = null;
+
+        // Handle file uploads
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const imageData = {
+                            id: Date.now() + Math.random(),
+                            src: e.target.result,
+                            name: file.name,
+                            timestamp: new Date().toLocaleString()
+                        };
+                        uploadedImages.push(imageData);
+                        renderGallery();
+                        showToast('Image added successfully!', 'success');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        // Render gallery
+        function renderGallery() {
+            const gallery = document.getElementById('imageGallery');
+
+            if (uploadedImages.length === 0) {
+                gallery.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No images yet. Upload some to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            gallery.innerHTML = uploadedImages.map((img, index) => `
+                <div class="image-card" onclick="selectImage(${index})">
+                    <img src="${img.src}" alt="${img.name}">
+                    <div class="image-info">
+                        <div class="image-name" title="${img.name}">${img.name}</div>
+                        <div class="image-actions">
+                            <button class="btn btn-share" onclick="shareImage(${index}, event)">
+                                <span>📤</span> Share
+                            </button>
+                            <button class="btn btn-delete" onclick="deleteImage(${index}, event)">
+                                <span>🗑️</span> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Select image for preview
+        function selectImage(index) {
+            selectedImageIndex = index;
+            updatePreview();
+        }
+
+        // Update WhatsApp preview
+        function updatePreview() {
+            const container = document.getElementById('chatContainer');
+
+            if (selectedImageIndex === null || !uploadedImages[selectedImageIndex]) {
+                container.innerHTML = `
+                    <div class="empty-preview">
+                        <div class="empty-preview-icon">👆</div>
+                        <p>Select an image to preview</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const img = uploadedImages[selectedImageIndex];
+            container.innerHTML = `
+                <div class="chat-bubble">
+                    <img src="${img.src}" alt="${img.name}">
+                    <div class="chat-bubble-text">${img.name}</div>
+                </div>
+            `;
+        }
+
+        // Generate share link
+        function generateShareLink() {
+            if (uploadedImages.length === 0) {
+                showToast('Please add images first!', 'error');
+                return;
+            }
+
+            const imageData = uploadedImages.map(img => ({
+                src: img.src,
+                name: img.name
+            }));
+
+            const json = JSON.stringify(imageData);
+            const base64 = btoa(json);
+            const link = window.location.origin + window.location.pathname + '?share=' + base64;
+
+            document.getElementById('linkInput').value = link;
+            document.getElementById('linkDisplay').classList.remove('hidden');
+            showToast('Share link generated!', 'success');
+        }
+
+        // Copy link
+        function copyLink() {
+            const input = document.getElementById('linkInput');
+            input.select();
+            document.execCommand('copy');
+            showToast('Link copied to clipboard!', 'success');
+        }
+
+        // Delete image
+        function deleteImage(index, event) {
+            event.stopPropagation();
+            uploadedImages.splice(index, 1);
+            if (selectedImageIndex === index) {
+                selectedImageIndex = null;
+                updatePreview();
+            }
+            renderGallery();
+            showToast('Image deleted!', 'success');
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast ' + type + ' show';
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Drag and drop support
+        const uploadArea = document.getElementById('uploadArea');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        // Handle shared link on load
+        window.addEventListener('load', () => {
+            const params = new URLSearchParams(window.location.search);
+            const shareParam = params.get('share');
+
+            if (shareParam) {
+                try {
+                    const imageData = JSON.parse(atob(shareParam));
+                    
+                    // Clear the URL to remove share parameter
+                    window.history.replaceState({}, document.title, window.location.pathname);
+
+                    // Load shared images
+                    uploadedImages = imageData.map((img, idx) => ({
+                        id: Date.now() + idx,
+                        src: img.src,
+                        name: img.name,
+                        timestamp: new Date().toLocaleString()
+                    }));
+
+                    renderGallery();
+                    selectImage(0);
+                    showToast('📤 Shared images loaded! (View once)', 'success');
+
+                    // Auto-delete images after 5 minutes or when user leaves
+                    setTimeout(() => {
+                        uploadedImages = [];
+                        renderGallery();
+                        showToast('Shared images expired.', 'info');
+                    }, 5 * 60 * 1000);
+
+                } catch (e) {
+                    console.error('Invalid share link:', e);
+                    showToast('Invalid share link!', 'error');
+                }
+            }
+        });
+
+        // Clear on page unload (for shared links)
+        window.addEventListener('beforeunload', () => {
+            if (window.location.search.includes('share=')) {
+                uploadedImages = [];
+            }
+        });
+    </script>
+</body>
+</html><script></script></body></html>
